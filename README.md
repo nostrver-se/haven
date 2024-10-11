@@ -74,6 +74,10 @@ Run the following command to build the relay:
 go build
 ```
 
+### Run with Docker compose
+
+`docker compose up -d`
+
 ### 5. Create a Systemd Service
 
 To have the relay run as a service, create a systemd unit file. Make sure to limit the memory usage to less than your system's total memory to prevent the relay from crashing the system.

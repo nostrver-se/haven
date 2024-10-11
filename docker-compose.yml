@@ -1,0 +1,14 @@
+services:
+  relay:
+    container_name: haven-relay
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - "./db:/app/db"
+      - "./templates:/app/templates"
+      - "./relays_import.json:/app/relays_import.json"
+      - "./relays_blastr.json:/app/relays_blastr.json"
+    ports:
+      - "3322:3355"
