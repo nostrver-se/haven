@@ -3,7 +3,8 @@ FROM golang:latest as builder
 
 WORKDIR /build
 
-RUN go install github.com/bitvora/haven@latest
+#RUN go install github.com/bitvora/haven@latest
+RUN go build -o haven .
 
 # Runtime stage
 FROM debian:bookworm-slim
