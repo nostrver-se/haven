@@ -78,7 +78,11 @@ go build
 
 ### Run with Docker compose
 
-`docker compose up -d`
+```bash
+docker compose up -d
+````
+
+http://localhost:3322
 
 ### 5. Create a Systemd Service
 
