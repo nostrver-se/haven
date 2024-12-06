@@ -196,7 +196,7 @@ func initRelays() {
 
 	mux := privateRelay.Router()
 
-	mux.HandleFunc("/private", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /private", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
 		data := struct {
 			RelayName        string
@@ -268,26 +268,31 @@ func initRelays() {
 	})
 
 	allowedKinds := []int{
-		nostr.KindSimpleGroupAddPermission,
-		nostr.KindSimpleGroupAddUser,
-		nostr.KindSimpleGroupAdmins,
+		// Regular kinds
 		nostr.KindSimpleGroupChatMessage,
-		nostr.KindSimpleGroupCreateGroup,
-		nostr.KindSimpleGroupDeleteEvent,
-		nostr.KindSimpleGroupDeleteGroup,
-		nostr.KindSimpleGroupEditGroupStatus,
+		nostr.KindSimpleGroupThreadedReply,
+		nostr.KindSimpleGroupThread,
+		nostr.KindSimpleGroupReply,
+		nostr.KindChannelMessage,
+		nostr.KindChannelHideMessage,
+
+		nostr.KindGiftWrap,
+
+		nostr.KindSimpleGroupPutUser,
+		nostr.KindSimpleGroupRemoveUser,
 		nostr.KindSimpleGroupEditMetadata,
+		nostr.KindSimpleGroupDeleteEvent,
+		nostr.KindSimpleGroupCreateGroup,
+		nostr.KindSimpleGroupDeleteGroup,
+		nostr.KindSimpleGroupCreateInvite,
 		nostr.KindSimpleGroupJoinRequest,
 		nostr.KindSimpleGroupLeaveRequest,
-		nostr.KindSimpleGroupMembers,
+
+		// Addressable kinds
 		nostr.KindSimpleGroupMetadata,
-		nostr.KindSimpleGroupRemovePermission,
-		nostr.KindSimpleGroupRemoveUser,
-		nostr.KindSimpleGroupReply,
-		nostr.KindSimpleGroupThread,
-		nostr.KindChannelHideMessage,
-		nostr.KindChannelMessage,
-		nostr.KindGiftWrap,
+		nostr.KindSimpleGroupAdmins,
+		nostr.KindSimpleGroupMembers,
+		nostr.KindSimpleGroupRoles,
 	}
 
 	chatRelay.RejectEvent = append(chatRelay.RejectEvent, func(ctx context.Context, event *nostr.Event) (bool, string) {
@@ -302,7 +307,7 @@ func initRelays() {
 
 	mux = chatRelay.Router()
 
-	mux.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /chat", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
 		data := struct {
 			RelayName        string
@@ -371,9 +376,8 @@ func initRelays() {
 
 	mux = outboxRelay.Router()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
 		data := struct {
 			RelayName        string
@@ -405,7 +409,7 @@ func initRelays() {
 		}
 		return nil
 	})
-	bl.LoadBlob = append(bl.LoadBlob, func(ctx context.Context, sha256 string) (io.Reader, error) {
+	bl.LoadBlob = append(bl.LoadBlob, func(ctx context.Context, sha256 string) (io.ReadSeeker, error) {
 		return fs.Open(config.BlossomPath + sha256)
 	})
 	bl.DeleteBlob = append(bl.DeleteBlob, func(ctx context.Context, sha256 string) error {
@@ -416,7 +420,7 @@ func initRelays() {
 			return false, ext, size
 		}
 
-		return true, "only notes signed by the owner of this relay are allowed", 0
+		return true, "only notes signed by the owner of this relay are allowed", 403
 	})
 
 	inboxRelay.Info.Name = config.InboxRelayName
@@ -477,7 +481,7 @@ func initRelays() {
 
 	mux = inboxRelay.Router()
 
-	mux.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /inbox", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
 		data := struct {
 			RelayName        string

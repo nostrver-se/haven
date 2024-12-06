@@ -29,6 +29,14 @@ HAVEN (High Availability Vault for Events on Nostr) is the most sovereign person
 ## Prerequisites
 
 - **Go**: Ensure you have Go installed on your system. You can download it from [here](https://golang.org/dl/).
+
+    ```bash
+    sudo apt update #Update Package List
+    sudo apt install snapd #install snapd to get a newer version of Go
+    sudo snap install go --classic #Install Go
+    go version #check if go was installed correctly
+    ```
+
 - **Build Essentials**: If you're using Linux, you may need to install build essentials. You can do this by running `sudo apt install build-essential`.
 
 ## Setup Instructions
@@ -87,6 +95,8 @@ http://localhost:3322
 ### 5. Create a Systemd Service
 
 To have the relay run as a service, create a systemd unit file. Make sure to limit the memory usage to less than your system's total memory to prevent the relay from crashing the system.
+and Replace the values for `ExecStart` and `WorkingDirectory` with the actual paths where you cloned the repository and stored the `.env` file.
+
 
 1. Create the file:
 
@@ -102,15 +112,15 @@ Description=Haven Relay
 After=network.target
 
 [Service]
-ExecStart=/home/ubuntu/haven/haven
-WorkingDirectory=/home/ubuntu/haven
+ExecStart=/home/ubuntu/haven/haven #Edit path to point to the path of where the haven git was pulled
+WorkingDirectory=/home/ubuntu/haven #Edit path to point to the path of where the haven git was pulled
+MemoryLimit=1000M  # Example, Limit memory usage to 1000 MB | Edit this to fit your machine
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Replace the values for `ExecStart` and `WorkingDirectory` with the actual paths where you cloned the repository and stored the `.env` file.
 
 3. Reload systemd to recognize the new service:
 
@@ -132,7 +142,20 @@ sudo systemctl enable haven
 
 ### 6. Serving over nginx (optional)
 
-You can serve the relay over nginx by adding the following configuration to your nginx configuration file:
+To have a domain name (example: relay.domain.com) point to your machine, you will need to setup an nginx.
+
+1. Install nginx on your relay:
+
+```bash
+sudo apt-get update 
+sudo apt-get install nginx
+```
+
+2. Remove default config: `sudo rm -rf /etc/nginx/sites-available/default`
+
+3. Create new default config: `sudo nano /etc/nginx/sites-available/default` 
+
+4. Add new reverse proxy config by adding the following configuration to your nginx configuration file:
 
 ```nginx
 server {
@@ -177,22 +200,34 @@ sudo certbot --nginx
 
 Follow the instructions to generate the certificate.
 
+Note: Command will fail if the Domain you added to nginx is not yet pointing at your machine's IP address. 
+This is done by adding an A record subdomain pointing to your IP address through your DNS recrods Manager.
+
 ### 8. Run The Import (optional)
 
 If you want to import your old notes and notes you're tagged in from other relays, run the following command:
 
 ```bash
+sudo systemctl stop haven
 ./haven --import
+sudo systemctl start haven
 ```
 
 ### 9. Access the relay
 
 Once everything is set up, the relay will be running on `localhost:3355` with the following endpoints:
 
-- `localhost:3355` (outbox)
+- `localhost:3355` (outbox and Blossom server)
 - `localhost:3355/private`
 - `localhost:3355/chat`
 - `localhost:3355/inbox`
+
+## Blossom Media Server
+
+The outbox relay also functions as a media server for hosting images and videos. You can upload media files to the relay and obtain a shareable link.  
+Only the relay owner has upload permissions to the media server, but anyone can view the hosted images and videos.
+
+Media files are stored in the file system based on the `BLOSSOM_PATH` environment variable set in the `.env` file. The default path is `./blossom`.
 
 ## Cloud Backups
 
